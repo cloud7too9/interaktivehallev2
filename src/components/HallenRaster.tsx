@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { strukturbereiche, arbeitsbereiche } from "../core";
-import type { Strukturbereich, Arbeitsbereich } from "../core";
+import type { Strukturbereich, Arbeitsbereich, ArbeitsbereichId, ArbeitsbereichStatus } from "../core";
 
 const SPALTEN = 20;
 const ZEILEN = 36;
@@ -20,36 +19,45 @@ const FUNKTION_FARBEN: Record<string, string> = {
   bearbeiten: "#ff9500",
 };
 
-export function HallenRaster() {
-  const [aktiv, setAktiv] = useState<string | null>(null);
+const STATUS_OVERLAY: Record<ArbeitsbereichStatus, string> = {
+  aktiv: "",
+  inaktiv: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.15) 4px, rgba(0,0,0,0.15) 8px)",
+  wartung: "repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255,165,0,0.3) 4px, rgba(255,165,0,0.3) 8px)",
+};
 
+export function HallenRaster({
+  aktiv,
+  onSelect,
+  getStatus,
+}: {
+  aktiv: string | null;
+  onSelect: (id: string | null) => void;
+  getStatus: (id: ArbeitsbereichId) => ArbeitsbereichStatus;
+}) {
   const rasterBereiche = strukturbereiche.filter((b) => b.raster);
 
   return (
-    <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${SPALTEN}, ${ZELL_GROESSE}px)`,
-          gridTemplateRows: `repeat(${ZEILEN}, ${ZELL_GROESSE}px)`,
-          gap: `${GAP}px`,
-          position: "relative",
-        }}
-      >
-        {rasterBereiche.map((b) => (
-          <StrukturZelle key={b.id} bereich={b} aktiv={aktiv} />
-        ))}
-        {arbeitsbereiche.map((a) => (
-          <ArbeitsZelle
-            key={a.id}
-            bereich={a}
-            aktiv={aktiv}
-            onHover={setAktiv}
-          />
-        ))}
-      </div>
-
-      <InfoPanel aktiv={aktiv} />
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${SPALTEN}, ${ZELL_GROESSE}px)`,
+        gridTemplateRows: `repeat(${ZEILEN}, ${ZELL_GROESSE}px)`,
+        gap: `${GAP}px`,
+        position: "relative",
+      }}
+    >
+      {rasterBereiche.map((b) => (
+        <StrukturZelle key={b.id} bereich={b} aktiv={aktiv} />
+      ))}
+      {arbeitsbereiche.map((a) => (
+        <ArbeitsZelle
+          key={a.id}
+          bereich={a}
+          aktiv={aktiv}
+          onSelect={onSelect}
+          status={getStatus(a.id)}
+        />
+      ))}
     </div>
   );
 }
@@ -91,25 +99,30 @@ function StrukturZelle({
 function ArbeitsZelle({
   bereich,
   aktiv,
-  onHover,
+  onSelect,
+  status,
 }: {
   bereich: Arbeitsbereich;
   aktiv: string | null;
-  onHover: (id: string | null) => void;
+  onSelect: (id: string | null) => void;
+  status: ArbeitsbereichStatus;
 }) {
   const r = bereich.raster;
   const farbe = FUNKTION_FARBEN[bereich.funktion] ?? "#888";
   const istAktiv = aktiv === bereich.id;
+  const gedimmt = status === "inaktiv" ? 0.4 : 1;
 
   return (
     <div
-      onMouseEnter={() => onHover(bereich.id)}
-      onMouseLeave={() => onHover(null)}
+      onClick={() => onSelect(istAktiv ? null : bereich.id)}
+      onMouseEnter={(e) => e.currentTarget.style.outline = "2px solid #000"}
+      onMouseLeave={(e) => e.currentTarget.style.outline = "none"}
       style={{
         gridColumn: `${r.spalte + 1} / span ${r.spalten}`,
         gridRow: `${r.zeile + 1} / span ${r.zeilen}`,
         backgroundColor: farbe,
-        opacity: istAktiv ? 1 : 0.75,
+        backgroundImage: STATUS_OVERLAY[status],
+        opacity: istAktiv ? 1 : 0.75 * gedimmt,
         border: istAktiv ? "2px solid #000" : "1px solid rgba(0,0,0,0.2)",
         borderRadius: "6px",
         display: "flex",
@@ -130,40 +143,6 @@ function ArbeitsZelle({
         {bereich.nummer}
       </span>
       <span>{bereich.name}</span>
-    </div>
-  );
-}
-
-function InfoPanel({ aktiv }: { aktiv: string | null }) {
-  const arbeitsbereich = arbeitsbereiche.find((a) => a.id === aktiv);
-
-  if (!arbeitsbereich) {
-    return (
-      <div style={{ minWidth: "200px", color: "#888", fontSize: "0.85rem" }}>
-        Bereich hovern, um Details zu sehen.
-      </div>
-    );
-  }
-
-  return (
-    <div
-      style={{
-        minWidth: "200px",
-        padding: "1rem",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        fontSize: "0.85rem",
-        lineHeight: 1.6,
-      }}
-    >
-      <strong style={{ fontSize: "1rem" }}>{arbeitsbereich.name}</strong>
-      <div>Nr: {arbeitsbereich.nummer}</div>
-      <div>Funktion: {arbeitsbereich.funktion}</div>
-      <div>Halle: {arbeitsbereich.halleId}</div>
-      <div>
-        Raster: {arbeitsbereich.raster.spalte},{arbeitsbereich.raster.zeile} (
-        {arbeitsbereich.raster.spalten}&times;{arbeitsbereich.raster.zeilen})
-      </div>
     </div>
   );
 }

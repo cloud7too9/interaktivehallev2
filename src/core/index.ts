@@ -6,6 +6,7 @@ export type {
   RasterPosition,
   Strukturbereich,
   Arbeitsbereich,
+  ArbeitsbereichStatus,
 } from "./typen";
 
 export {
