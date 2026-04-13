@@ -1,5 +1,5 @@
 import { strukturbereiche, arbeitsbereiche } from "../core";
-import type { Strukturbereich, Arbeitsbereich, ArbeitsbereichId, ArbeitsbereichStatus } from "../core";
+import type { Strukturbereich, Arbeitsbereich, ArbeitsbereichId, ArbeitsbereichStatus, Auftrag } from "../core";
 
 const SPALTEN = 20;
 const ZEILEN = 36;
@@ -29,10 +29,12 @@ export function HallenRaster({
   aktiv,
   onSelect,
   getStatus,
+  fuerBereich,
 }: {
   aktiv: string | null;
   onSelect: (id: string | null) => void;
   getStatus: (id: ArbeitsbereichId) => ArbeitsbereichStatus;
+  fuerBereich: (id: ArbeitsbereichId) => Auftrag[];
 }) {
   const rasterBereiche = strukturbereiche.filter((b) => b.raster);
 
@@ -56,6 +58,7 @@ export function HallenRaster({
           aktiv={aktiv}
           onSelect={onSelect}
           status={getStatus(a.id)}
+          auftraegeAnzahl={fuerBereich(a.id).length}
         />
       ))}
     </div>
@@ -101,11 +104,13 @@ function ArbeitsZelle({
   aktiv,
   onSelect,
   status,
+  auftraegeAnzahl,
 }: {
   bereich: Arbeitsbereich;
   aktiv: string | null;
   onSelect: (id: string | null) => void;
   status: ArbeitsbereichStatus;
+  auftraegeAnzahl: number;
 }) {
   const r = bereich.raster;
   const farbe = FUNKTION_FARBEN[bereich.funktion] ?? "#888";
@@ -125,6 +130,7 @@ function ArbeitsZelle({
         opacity: istAktiv ? 1 : 0.75 * gedimmt,
         border: istAktiv ? "2px solid #000" : "1px solid rgba(0,0,0,0.2)",
         borderRadius: "6px",
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -143,6 +149,28 @@ function ArbeitsZelle({
         {bereich.nummer}
       </span>
       <span>{bereich.name}</span>
+      {auftraegeAnzahl > 0 && (
+        <span
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            backgroundColor: "#fff",
+            color: "#333",
+            fontSize: "0.6rem",
+            fontWeight: 700,
+            borderRadius: "50%",
+            width: "18px",
+            height: "18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+          }}
+        >
+          {auftraegeAnzahl}
+        </span>
+      )}
     </div>
   );
 }

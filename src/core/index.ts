@@ -7,6 +7,8 @@ export type {
   Strukturbereich,
   Arbeitsbereich,
   ArbeitsbereichStatus,
+  Auftrag,
+  AuftragStatus,
 } from "./typen";
 
 export {

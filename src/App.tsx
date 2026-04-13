@@ -2,11 +2,15 @@ import { useState } from "react";
 import { HallenRaster } from "./components/HallenRaster";
 import { Baumansicht } from "./components/Baumansicht";
 import { StatusLeiste } from "./components/StatusLeiste";
+import { Auftraege } from "./components/Auftraege";
 import { useArbeitsbereichStatus } from "./hooks/useArbeitsbereichStatus";
+import { useAuftraege } from "./hooks/useAuftraege";
 
 export function App() {
   const [aktiv, setAktiv] = useState<string | null>(null);
   const { getStatus, setStatus } = useArbeitsbereichStatus();
+  const { auftraege, erstellen, zuweisen, statusAendern, entfernen, fuerBereich } =
+    useAuftraege();
 
   return (
     <div
@@ -16,7 +20,7 @@ export function App() {
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      {/* Sidebar */}
+      {/* Sidebar links */}
       <aside
         style={{
           width: "260px",
@@ -26,6 +30,7 @@ export function App() {
           display: "flex",
           flexDirection: "column",
           gap: "1.5rem",
+          flexShrink: 0,
         }}
       >
         <h1 style={{ fontSize: "1.1rem", margin: 0 }}>Interaktive Halle</h1>
@@ -70,8 +75,33 @@ export function App() {
           aktiv={aktiv}
           onSelect={setAktiv}
           getStatus={getStatus}
+          fuerBereich={fuerBereich}
         />
       </main>
+
+      {/* Sidebar rechts: Aufträge */}
+      <aside
+        style={{
+          width: "300px",
+          borderLeft: "1px solid #e0e0e0",
+          padding: "1rem",
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          flexShrink: 0,
+        }}
+      >
+        <h2 style={{ fontSize: "0.95rem", margin: 0 }}>Aufträge</h2>
+        <Auftraege
+          auftraege={auftraege}
+          aktiv={aktiv}
+          onErstellen={erstellen}
+          onZuweisen={zuweisen}
+          onStatusAendern={statusAendern}
+          onEntfernen={entfernen}
+        />
+      </aside>
     </div>
   );
 }
